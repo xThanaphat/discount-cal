@@ -1,0 +1,409 @@
+<?php
+/**
+ * Discount Exam - Main Testing Interface
+ * Modern, minimal, and professional design
+ */
+
+// Include core functions
+require_once __DIR__ . '/include/function.php';
+
+// Handle AJAX requests
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    handleAjaxRequest();
+    exit;
+}
+
+// Handle form submissions
+$result = null;
+$error = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
+    try {
+        $result = processFormSubmission($_POST);
+    } catch (Exception $e) {
+        $error = $e->getMessage();
+    }
+}
+
+/**
+ * Handle AJAX requests
+ */
+function handleAjaxRequest() {
+    $action = $_POST['action'] ?? '';
+    
+    try {
+        switch ($action) {
+            case 'load_items':
+                $itemsData = loadJsonData('sample_items.json');
+                jsonResponse([
+                    'success' => true,
+                    'data' => $itemsData['items']
+                ]);
+                break;
+                
+            case 'load_campaigns':
+                $campaignsData = loadJsonData('sample_campaigns.json');
+                jsonResponse([
+                    'success' => true,
+                    'data' => $campaignsData['campaigns']
+                ]);
+                break;
+                
+            case 'run_test_function':
+                $testId = $_POST['test_id'] ?? '';
+                $result = runTestFunction($testId);
+                jsonResponse([
+                    'success' => true,
+                    'result' => $result
+                ]);
+                break;
+                
+            case 'add_items_to_cart':
+                $itemIds = $_POST['item_ids'] ?? [];
+                $items = loadSelectedItems($itemIds);
+                jsonResponse([
+                    'success' => true,
+                    'items' => $items
+                ]);
+                break;
+                
+            case 'apply_campaign':
+                $campaignId = $_POST['campaign_id'] ?? '';
+                $campaign = loadSelectedCampaign($campaignId);
+                jsonResponse([
+                    'success' => true,
+                    'campaign' => $campaign
+                ]);
+                break;
+                
+            default:
+                jsonResponse([
+                    'success' => false,
+                    'message' => 'Unknown action'
+                ], 400);
+        }
+    } catch (Exception $e) {
+        jsonResponse([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+// Load available data for UI
+$availableItems = loadJsonData('items.json')['items'];
+$availableCampaigns = loadJsonData('campaigns.json')['campaigns'];
+$testFunctions = loadJsonData('test_function.json')['test_functions'];
+
+// Load JSON data
+$cartData = json_decode(file_get_contents(__DIR__ . '/data/cart.json'), true);
+$campaignsData = json_decode(file_get_contents(__DIR__ . '/data/campaigns.json'), true);
+
+// Build items (CartItem array)
+$items = [];
+foreach ($cartData['items'] as $i) {
+    $items[] = new CartItem(
+        $i['id'] ?? null,
+        $i['name'] ?? '',
+        $i['price'] ?? 0,
+        $i['category'] ?? '',
+        $i['quantity'] ?? 1
+    );
+}
+
+// สมมติว่ามี customer_points ใน cartData (ถ้าไม่มีให้เป็น 0)
+$customerPoints = isset($cartData['customer_points']) ? $cartData['customer_points'] : 0;
+
+// campaignsData ต้องเป็น array ของ campaign ตามที่ function.php ต้องการ
+// ถ้า campaignsData เป็น associative array (มี key coupon, on_top, ...)
+// ให้แปลงเป็น array ของ campaign
+$campaigns = $campaignsData['campaigns'] ?? [];
+
+// คำนวณส่วนลด
+try {
+    $result = calculateDiscount($items, $campaigns, $customerPoints);
+    $resultArr = $result->toArray();
+    echo "Original Price: " . $resultArr['formatted']['original_price'] . "\n";
+    echo "Total Discount: " . $resultArr['formatted']['total_discount'] . "\n";
+    echo "Final Price:   " . $resultArr['formatted']['final_price'] . "\n\n";
+    echo "Applied Discounts:\n";
+    foreach ($resultArr['discount_breakdown'] as $d) {
+        echo " - " . $d['campaign'] . " (" . $d['category'] . "): -" . number_format($d['discount'], 2) . "\n";
+    }
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-badge">Assignment Solution</div>
+            <h1><?= APP_NAME ?></h1>
+            <p class="subtitle">Professional testing interface for discount calculation system</p>
+        </div>
+
+        <!-- Error Alert -->
+        <?php if ($error): ?>
+            <div class="alert alert-danger">
+                <strong>Error:</strong> <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
+        <!-- Quick Test Functions -->
+        <div class="card">
+            <div class="card-header">
+                <h3>🧪 Quick Test Functions</h3>
+                <small class="text-muted">Run predefined test scenarios</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <?php
+                    $testCategories = ['assignment', 'edge_case', 'combination', 'stress'];
+                    foreach ($testCategories as $category): 
+                        $categoryTests = array_filter($testFunctions, function($test) use ($category) {
+                            return $test['test_type'] === $category;
+                        });
+                    ?>
+                        <div class="col-6">
+                            <h4><?= ucfirst(str_replace('_', ' ', $category)) ?> Tests</h4>
+                            <div class="sample-buttons">
+                                <?php foreach ($categoryTests as $test): ?>
+                                    <button type="button" class="btn-sample" onclick="runTestFunction('<?= $test['id'] ?>')">
+                                        <?= htmlspecialchars($test['name']) ?>
+                                    </button>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <div id="test-results" style="display: none;">
+                    <div class="result-section">
+                        <h4>Test Results</h4>
+                        <div id="test-result-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Testing Form -->
+        <form method="POST" id="discountForm">
+            <!-- Item Selection -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🛒 Select Items</h3>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="showItemSelector()">
+                            Browse Items
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="clearCart()">
+                            Clear Cart
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Item Browser Modal -->
+                    <div id="itemBrowser" style="display: none;" class="mb-4">
+                        <h4>Available Items</h4>
+                        <div class="row">
+                            <?php foreach ($availableItems as $item): ?>
+                                <div class="col-4 mb-3">
+                                    <div class="item-card" onclick="addItemToCart('<?= $item['id'] ?>')">
+                                        <h5><?= htmlspecialchars($item['name']) ?></h5>
+                                        <p class="text-muted"><?= $item['category'] ?></p>
+                                        <p><strong><?= formatCurrency($item['price']) ?></strong></p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    
+                    <div id="cartItems">
+                        <div class="item-row" data-index="0">
+                            <div class="row">
+                                <div class="col-3">
+                                    <label class="form-label">Item Name</label>
+                                    <input type="text" class="form-control" name="items[0][name]" placeholder="e.g., T-Shirt">
+                                </div>
+                                <div class="col-2">
+                                    <label class="form-label">Price (THB)</label>
+                                    <input type="number" class="form-control" name="items[0][price]" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="col-2">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-control" name="items[0][category]">
+                                        <?php foreach (ITEM_CATEGORIES as $value => $label): ?>
+                                            <option value="<?= $label ?>"><?= $label ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="col-2">
+                                    <label class="form-label">Quantity</label>
+                                    <input type="number" class="form-control" name="items[0][quantity]" min="1" value="1">
+                                </div>
+                                <div class="col-2">
+                                    <label class="form-label">Total</label>
+                                    <input type="text" class="form-control item-total" readonly placeholder="0.00">
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label">&nbsp;</label><br>
+                                    <button type="button" class="btn btn-danger btn-sm" onclick="removeItem(this)">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addNewItem()">+ Add Item</button>
+                        <div class="text-right">
+                            <strong>Cart Total: <span id="cartTotal">0.00 THB</span></strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Campaign Selection -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🎯 Select Campaigns</h3>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="showCampaignSelector()">
+                        Browse Campaigns
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Campaign Browser -->
+                    <div id="campaignBrowser" style="display: none;" class="mb-4">
+                        <h4>Available Campaigns</h4>
+                        <div class="row">
+                            <?php 
+                            $campaignsByCategory = [];
+                            foreach ($availableCampaigns as $campaign) {
+                                $campaignsByCategory[$campaign['category']][] = $campaign;
+                            }
+                            
+                            foreach ($campaignsByCategory as $category => $campaigns): 
+                            ?>
+                                <div class="col-4">
+                                    <h5><?= $category ?> Campaigns</h5>
+                                    <?php foreach ($campaigns as $campaign): ?>
+                                        <div class="campaign-card" onclick="applyCampaign('<?= $campaign['id'] ?>')">
+                                            <h6><?= htmlspecialchars($campaign['name']) ?></h6>
+                                            <p class="text-muted small"><?= htmlspecialchars($campaign['description']) ?></p>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <!-- Active Campaigns -->
+                    <div id="activeCampaigns">
+                        <h4>Active Campaigns</h4>
+                        <div id="campaignList">
+                            <p class="text-muted">No campaigns selected</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>👤 Customer Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-3">
+                            <label class="form-label">Available Points</label>
+                            <input type="number" class="form-control" name="customer_points" min="0" value="0" placeholder="0">
+                            <small class="text-muted">1 point = 1 THB (max 20% of total)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <span id="calculate-text">Calculate Discount</span>
+                    <span id="calculate-spinner" class="spinner" style="display: none;"></span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Results Section -->
+        <?php if ($result): ?>
+            <div class="card fade-in">
+                <div class="card-header" style="background: linear-gradient(135deg, var(--success-color), #059669);">
+                    <h3 style="color: white; margin: 0;">✅ Calculation Results</h3>
+                </div>
+                <div class="card-body">
+                    <div class="result-grid">
+                        <div class="result-summary">
+                            <h4>Summary</h4>
+                            <div class="summary-item">
+                                <span>Original Price:</span>
+                                <span><?= formatCurrency($result->originalPrice) ?></span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Total Discount:</span>
+                                <span class="discount-amount">-<?= formatCurrency($result->totalDiscount) ?></span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Final Price:</span>
+                                <span><?= formatCurrency($result->finalPrice) ?></span>
+                            </div>
+                        </div>
+                        
+                        <div class="result-breakdown">
+                            <h4>Discount Breakdown</h4>
+                            <?php if (!empty($result->discountBreakdown)): ?>
+                                <?php foreach ($result->discountBreakdown as $breakdown): ?>
+                                    <div class="summary-item">
+                                        <span><?= htmlspecialchars($breakdown['campaign']) ?></span>
+                                        <span class="discount-amount">-<?= formatCurrency($breakdown['discount']) ?></span>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <p class="text-muted">No discounts applied</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <?php if (!empty($result->appliedCampaigns)): ?>
+                        <div class="mt-4">
+                            <h4>Applied Campaigns</h4>
+                            <div class="d-flex gap-2" style="flex-wrap: wrap;">
+                                <?php foreach ($result->appliedCampaigns as $campaign): ?>
+                                    <span class="badge badge-primary"><?= htmlspecialchars($campaign) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <!-- Hidden data for JavaScript -->
+    <script>
+        window.availableItems = <?= json_encode($availableItems) ?>;
+        window.availableCampaigns = <?= json_encode($availableCampaigns) ?>;
+    </script>
+    
+    <!-- JavaScript -->
+    <script src="js/app_script.js"></script>
+</body>
+</html>
