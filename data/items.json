@@ -1,0 +1,72 @@
+{
+    "items": [
+      {
+        "id": "item1",
+        "name": "T-Shirt",
+        "price": 250,
+        "category": "Clothing",
+        "quantity": 1,
+        "icon": "👕"
+      },
+      {
+        "id": "item2",
+        "name": "Hat",
+        "price": 100,
+        "category": "Accessories",
+        "quantity": 1,
+        "icon": "🧢"
+      },
+      {
+        "id": "3",
+        "name": "Hoodie",
+        "price": 700,
+        "category": "Clothing",
+        "quantity": 1,
+        "icon": "🧥"
+      },
+      {
+        "id": "5",
+        "name": "Bag",
+        "price": 640,
+        "category": "Accessories",
+        "quantity": 1,
+        "icon": "👜"
+      },
+      {
+        "id": "7",
+        "name": "Designer T-Shirt",
+        "price": 1500,
+        "category": "Clothing",
+        "quantity": 1,
+        "icon": "👔"
+      },
+      {
+        "id": "12",
+        "name": "Sunglasses",
+        "price": 450,
+        "category": "Accessories",
+        "quantity": 1,
+        "icon": "🕶️"
+      },
+      {
+        "id": "20",
+        "name": "Shoes",
+        "price": 1200,
+        "category": "Accessories",
+        "quantity": 1,
+        "icon": "👟"
+      },
+      {
+        "id": "21",
+        "name": "Watch",
+        "price": 2000,
+        "category": "Accessories",
+        "quantity": 1,
+        "icon": "⌚"
+      }
+    ],
+    "categories": [
+      "Clothing",
+      "Accessories"
+    ]
+  }

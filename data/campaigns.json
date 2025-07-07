@@ -1,0 +1,67 @@
+{
+    "campaigns": [
+      {
+        "id": "fixed_50",
+        "name": "Fixed 50 THB Off",
+        "type": "Fixed Amount",
+        "category": "Coupon",
+        "parameters": {
+          "amount": 50
+        },
+        "description": "Get 50 THB off your total purchase"
+      },
+      {
+        "id": "percentage_15",
+        "name": "15% Off Everything",
+        "type": "Percentage Discount",
+        "category": "Coupon",
+        "parameters": {
+          "percentage": 15
+        },
+        "description": "Get 15% off your entire order"
+      },
+      {
+        "id": "clothing_20",
+        "name": "20% Off Clothing",
+        "type": "Percentage by Category",
+        "category": "On Top", 
+        "parameters": {
+          "targetCategory": "Clothing",
+          "percentage": 20
+        },
+        "description": "Get 20% off all clothing items"
+      },
+      {
+        "id": "points_discount",
+        "name": "Use Your Points",
+        "type": "Discount by Points",
+        "category": "On Top",
+        "parameters": {},
+        "description": "Use loyalty points (1 point = 1 THB, max 20% of total)"
+      },
+      {
+        "id": "seasonal_500_100",
+        "name": "Spend 500 Get 100 Off",
+        "type": "Special Campaigns",
+        "category": "Seasonal",
+        "parameters": {
+          "threshold": 500,
+          "discount": 100,
+          "mode": "repeat"
+        },
+        "description": "Get 100 THB off for every 500 THB spent"
+      },
+      {
+        "id": "seasonal_1000_300",
+        "name": "Spend 1000 Get 300 Off",
+        "type": "Special Campaigns",
+        "category": "Seasonal",
+        "parameters": {
+          "threshold": 1000,
+          "discount": 300,
+          "mode": "once"
+        },
+        "description": "Get 300 THB off for 1000 THB spent"
+      }
+    ]
+  }
