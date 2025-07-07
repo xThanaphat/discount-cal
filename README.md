@@ -215,7 +215,6 @@ calculateDiscount($items, $campaigns, $customerPoints)
 ---
 
 ## 🔮 Future Enhancements
-
 ### Potential Improvements
 - **Database integration**: Persistent cart and user data
 - **User authentication**: Personalized campaigns and points tracking
@@ -229,10 +228,8 @@ calculateDiscount($items, $campaigns, $customerPoints)
 
 **Developer:** Thanaphat Hansuvan  
 **Repository Access:** Private GitHub repository shared with:
-- sirirat_k@playtorium.co.th
-- nichapat@playtorium.co.th  
-- suchawadee_m@playtorium.co.th
-
+- Playtorium Company Team.
+- 
 **Assignment Completion:** All requirements implemented and tested according to Playtorium specifications.
 
 ---
