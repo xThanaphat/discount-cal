@@ -1,15 +1,3 @@
-# Playtorium - Take Home Assignment
-## Discount Calculation System
-
-**Developer:** Thanaphat Hansuvan  
-**Repository:** Playtorium interview process
-
----
-
-## 📋 Assignment Overview
-
-This project implements a comprehensive discount calculation module for Playtorium's take-home assignment. The system calculates final order prices by applying multiple discount campaigns to shopping cart items, following specific business rules and priority orders.
-
 ## 🎯 Core Requirements Met
 
 ### ✅ Campaign Categories & Rules
@@ -221,16 +209,6 @@ calculateDiscount($items, $campaigns, $customerPoints)
 - **Advanced campaigns**: Time-based, user-specific, or combination rules
 - **Analytics**: Campaign performance tracking and optimization
 - **API endpoints**: RESTful API for mobile app integration
-
----
-
-## 📞 Contact & Submission
-
-**Developer:** Thanaphat Hansuvan  
-**Repository Access:** Private GitHub repository shared with:
-- Playtorium Company Team.
-- 
-**Assignment Completion:** All requirements implemented and tested according to Playtorium specifications.
 
 ---
 
